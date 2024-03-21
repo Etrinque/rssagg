@@ -1,0 +1,58 @@
+users - generates an api based on UUID
+
+{
+    "name":"eric"
+}
+
+{
+    "name":"json"
+}
+
+{
+    "name":"golang"
+}
+
+api_keys - generated at user creation.
+
+{
+    "api_key":""
+}
+{
+    "api_key":""
+}
+{
+    "api_key":""
+}
+
+feeds
+
+{
+    "name":"boot dev blog",
+    "url":"https://blog.boot.dev"
+}
+
+{
+    "name":"google",
+    "url":"https://www.google.com"
+}
+
+{
+    "name":"youtube",
+    "url":"https://www.youtube.com"
+}
+
+follow_feeds delete and retrieve
+generated @ feed creation and,
+when a user adds a feed.
+
+{
+    "":""
+}
+
+{
+    "":""
+}
+
+{
+    "":""
+}
