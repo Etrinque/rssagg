@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"rssagg/internal"
 	"rssagg/internal/database"
 	"strings"
 	"syscall"
@@ -17,6 +18,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var root = internal.Path
+var path = (root + "/rssagg/.env")
 var Router = chi.NewRouter()
 var corsMux = corsMiddleware(Router)
 
@@ -25,7 +28,7 @@ type ApiConfig struct {
 }
 
 func InitServer() {
-	err := godotenv.Load("/home/erictrinque/Documents/goProjects/rssagg/.env")
+	err := godotenv.Load(path)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

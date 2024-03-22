@@ -174,9 +174,10 @@ func (cfg *ApiConfig) handleGetFollowFeeds(w http.ResponseWriter, r *http.Reques
 
 // UN-Authenticated Endpoint
 func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Request, user database.User) {
-
+	// feedid := chi.URLParam(r, "{feed_id}")
 	feedid := r.PathValue("feed_id")
 	feedID, err := uuid.Parse(feedid)
+	fmt.Println(feedID)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "record not found")
 		return
