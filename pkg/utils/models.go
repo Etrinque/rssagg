@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"database/sql"
 	"rssagg/internal/database"
 	"time"
 
 	"github.com/google/uuid"
 )
+
 
 type User struct {
 	ID uuid.UUID `json:"id"`	
@@ -30,6 +32,7 @@ type Feed struct {
 	Name string `json:"name"`
 	Url string `json:"url"`
 	UserID uuid.UUID `json:"user_id"`
+	LastFetchedAt sql.NullTime `json:"last_fetched_at"`
 }
 
 func databaseFeedToFeed(feed database.Feed) Feed {
@@ -40,6 +43,7 @@ func databaseFeedToFeed(feed database.Feed) Feed {
 		Name: feed.Name,
 		Url:  feed.Url,
 		UserID: feed.UserID,
+		LastFetchedAt: feed.LastFetchedAt,
 	}
 }
 

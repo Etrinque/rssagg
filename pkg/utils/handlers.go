@@ -7,6 +7,7 @@ import (
 	"rssagg/internal/database"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/google/uuid"
 )
 
@@ -174,8 +175,9 @@ func (cfg *ApiConfig) handleGetFollowFeeds(w http.ResponseWriter, r *http.Reques
 
 // UN-Authenticated Endpoint
 func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Request, user database.User) {
-	// feedid := chi.URLParam(r, "{feed_id}")
-	feedid := r.PathValue("feed_id")
+	fmt.Println("starting parse of feed_id")
+	feedid := chi.URLParam(r, "feed_id")
+	fmt.Println(feedid)
 	feedID, err := uuid.Parse(feedid)
 	fmt.Println(feedID)
 	if err != nil {
@@ -188,29 +190,13 @@ func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Requ
 		ID: feedID,
 		UserID: user.ID,
 	})
+	fmt.Println("record deleted")
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not delete record")
 		return
 	}
 
-	type resp struct{ msg string }
-	RespondWithJSON(w, http.StatusOK, resp{ msg: "Record Deleted"})
+	type resp struct{ MSG string `json:"msg"`}
+	RespondWithJSON(w, http.StatusOK, resp{ MSG: "Record Deleted"})
 }
-
-// Delete helper function
-// func parseDeleteEndpointParam(req *http.Request) (uuid.UUID, error) {
-	// feedid := req.PathValue("feed_id")
-	// if feedid == "" {
-		// return uuid.Nil, errors.New("no provided feed_id")
-	// }
-	// fmt.Println("Feed_id string from url: ", feedid)
-	// 
-	// feedID, err := uuid.Parse(feedid)
-	// if err != nil {
-		// return uuid.Nil, err
-	// }
-	// fmt.Println("Feed_id cast to UUID: ", feedID)
-// 
-	// return feedID, nil
-// }
 
