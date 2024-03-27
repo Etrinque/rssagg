@@ -38,7 +38,7 @@ func InitServer() {
 		log.Fatal("PORT env not set")
 	}
 	fmt.Println(port)
-	
+
 	dbUrl := os.Getenv("CONNSTR")
 	if dbUrl == "" {
 		log.Fatal("error getting DB .env variable")
@@ -60,29 +60,29 @@ func InitServer() {
 	Router.Get("/v1/users", apiCfg.authMiddleware(apiCfg.handleUsersGet))
 	Router.Post("/v1/feeds", apiCfg.authMiddleware(apiCfg.handleFeedCreate))
 	Router.Get("/v1/feeds", apiCfg.handleGetAllFeeds)
+	// Router.Get("/v1/posts", apiCfg.authMiddleware(apiCfg.handleGetPostByUser))
+	Router.Get("/v1/posts", apiCfg.HandleGetFeedsFromUrl)
 	Router.Post("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleCreateFollowFeed))
 	Router.Get("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleGetFollowFeeds))
 	Router.Delete("/v1/feedfollow/{feed_id}", apiCfg.authMiddleware(apiCfg.handleDeleteFollowFeed))
 
 	server := &http.Server{
-		Addr: port,
-		Handler: corsMux,
-		ReadTimeout: 500 * time.Second,
+		Addr:         port,
+		Handler:      corsMux,
+		ReadTimeout:  500 * time.Second,
 		WriteTimeout: 500 * time.Second,
-
 	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan bool, 1)
-	
+
 	go func() {
 		sig := <-sigs
 		fmt.Printf(" |--> Terminated with signal: %v <--|", sig)
 		done <- true
 		os.Exit(0)
 	}()
-
 
 	fmt.Printf("listening on %v \n", port)
 	log.Fatal(server.ListenAndServe())

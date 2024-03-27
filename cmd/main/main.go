@@ -4,9 +4,6 @@ import (
 	"rssagg/pkg/utils"
 )
 
-
-func main(){
+func main() {
 	utils.InitServer()
 }
-
-

@@ -48,7 +48,7 @@ func (q *Queries) GetNextFeedsToFetch(ctx context.Context) ([]Feed, error) {
 
 const markFeedsFetched = `-- name: MarkFeedsFetched :exec
 UPDATE feeds 
-    SET time_last_fetched = TIMESTAMP
+    SET (time_last_fetched, updated_at) = TIMESTAMP
 `
 
 func (q *Queries) MarkFeedsFetched(ctx context.Context) error {

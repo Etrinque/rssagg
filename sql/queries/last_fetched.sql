@@ -6,4 +6,4 @@ SELECT * FROM feeds
 
 -- name: MarkFeedsFetched :exec
 UPDATE feeds 
-    SET time_last_fetched = TIMESTAMP;
+    SET (time_last_fetched, updated_at) = TIMESTAMP;

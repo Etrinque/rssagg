@@ -13,21 +13,21 @@ import (
 
 type authedHandler func(http.ResponseWriter, *http.Request, database.User)
 
-func (cfg *ApiConfig) authMiddleware(handler authedHandler) http.HandlerFunc { return func(w http.ResponseWriter, r *http.Request) {
-	apiKey, err := GetApiToken(r.Header)
-	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "could not parse APIkey")
-		return
-	}
-	user, err := cfg.DB.GetUserByAPIKey(r.Context(), apiKey)
-	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "user not found")
-		return
-	}
-	handler(w, r , user)
+func (cfg *ApiConfig) authMiddleware(handler authedHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		apiKey, err := GetApiToken(r.Header)
+		if err != nil {
+			RespondWithError(w, http.StatusUnauthorized, "could not parse APIkey")
+			return
+		}
+		user, err := cfg.DB.GetUserByAPIKey(r.Context(), apiKey)
+		if err != nil {
+			RespondWithError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		handler(w, r, user)
 	}
 }
-
 
 func handleReadiness(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusOK, "ok")
@@ -53,15 +53,15 @@ func (cfg *ApiConfig) handleUsersCreate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	user, err := cfg.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID: uuid.New(),
+		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		Name: params.Name,
+		Name:      params.Name,
 	})
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not create user")
-		return 
+		return
 	}
 	RespondWithJSON(w, http.StatusOK, databaseUserToUser(user))
 }
@@ -76,7 +76,7 @@ func (cfg *ApiConfig) handleUsersGet(w http.ResponseWriter, r *http.Request, use
 func (cfg *ApiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, user database.User) {
 	type parameters struct {
 		Name string `json:"name"`
-		Url string `json:"url"`
+		Url  string `json:"url"`
 	}
 
 	decode := json.NewDecoder(r.Body)
@@ -88,12 +88,12 @@ func (cfg *ApiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, u
 	}
 
 	feed, err := cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{
-		ID: uuid.New(),
+		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		Name: params.Name,
-		Url: params.Url,
-		UserID: user.ID,
+		Name:      params.Name,
+		Url:       params.Url,
+		UserID:    user.ID,
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not create feed")
@@ -101,11 +101,11 @@ func (cfg *ApiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, u
 	}
 
 	feedFollow, err := cfg.DB.CreateFollowFeed(r.Context(), database.CreateFollowFeedParams{
-		ID: uuid.New(),
+		ID:        uuid.New(),
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
-		UserID: user.ID,
-		FeedID: feed.ID,
+		UserID:    user.ID,
+		FeedID:    feed.ID,
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not create follow feed")
@@ -113,7 +113,7 @@ func (cfg *ApiConfig) handleFeedCreate(w http.ResponseWriter, r *http.Request, u
 	}
 
 	RespondWithJSON(w, http.StatusOK, struct {
-		feed Feed
+		feed       Feed
 		feedFollow FollowFeed
 	}{
 		databaseFeedToFeed(feed),
@@ -147,11 +147,11 @@ func (cfg *ApiConfig) handleCreateFollowFeed(w http.ResponseWriter, r *http.Requ
 	}
 
 	followFeed, err := cfg.DB.CreateFollowFeed(r.Context(), database.CreateFollowFeedParams{
-			ID: uuid.New(),
-			CreatedAt: time.Now().UTC(),
-			UpdatedAt: time.Now().UTC(),
-			UserID: user.ID,
-			FeedID: params.FeedID,
+		ID:        uuid.New(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+		UserID:    user.ID,
+		FeedID:    params.FeedID,
 	})
 
 	if err != nil {
@@ -187,7 +187,7 @@ func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Requ
 	fmt.Println("Feed_id cast to UUID: ", feedID)
 
 	err = cfg.DB.DeleteFollowFeed(r.Context(), database.DeleteFollowFeedParams{
-		ID: feedID,
+		ID:     feedID,
 		UserID: user.ID,
 	})
 	fmt.Println("record deleted")
@@ -196,7 +196,49 @@ func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	type resp struct{ MSG string `json:"msg"`}
-	RespondWithJSON(w, http.StatusOK, resp{ MSG: "Record Deleted"})
+	type resp struct {
+		MSG string `json:"msg"`
+	}
+	RespondWithJSON(w, http.StatusOK, resp{MSG: "Record Deleted"})
 }
 
+func (cfg *ApiConfig) HandleGetFeedsFromUrl(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		RootURL string `json:"url"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "unauthorized user")
+		return
+	}
+	rootUrl := params.RootURL
+	req, err := http.Get(rootUrl)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "could not get root url")
+	}
+
+	fmt.Println(rootUrl)
+	fmt.Println(req)
+
+	resp, err := cfg.getFeedsFromUrl(req)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "could not retrieve urls")
+		return
+	}
+
+	fmt.Println(resp)
+
+	RespondWithJSON(w, http.StatusOK, resp)
+}
+
+// AUthenticated endpoint
+// func (cfg *ApiConfig) handleGetPostByUser(w http.ResponseWriter, r *http.Request, user database.User, feed database.Feed) {
+//
+// posts, err := cfg.DB.GetPostsByUser(r.Context(), user.ID)
+// if err != nil {
+// RespondWithError(w, http.StatusUnauthorized, "unauthorized")
+// }
+// urls, err := cfg.getFeedsFromUrl(r, feed.Url)
+// }
