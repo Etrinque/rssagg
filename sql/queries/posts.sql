@@ -4,6 +4,8 @@ VALUES($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: GetPostsByUser :many
-SELECT FROM posts
-    WHERE feed_id = $1
-    ORDER BY published_at DESC;
+SELECT posts.* FROM posts
+    JOIN follow_feeds ON follow_feeds.feed_id = posts.feed_id
+    WHERE follow_feeds.user_id = $1
+    ORDER BY posts.published_at DESC
+    LIMIT $2;

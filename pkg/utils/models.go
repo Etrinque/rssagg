@@ -91,7 +91,7 @@ type Post struct {
 	FeedID      uuid.UUID      `json:"feed_id"`
 }
 
-func databaseFeedPostToFeedPost(post database.Post) Post {
+func databasePostToPost(post database.Post) Post {
 	return Post{
 		ID:          post.ID,
 		CreatedAt:   post.CreatedAt,
@@ -99,7 +99,28 @@ func databaseFeedPostToFeedPost(post database.Post) Post {
 		Title:       post.Title,
 		Url:         post.Url,
 		Description: post.Description,
-		PublishedAt: post.PublishedAt,
+		PublishedAt: *nullTImetoTimePTR(post.PublishedAt),
 		FeedID:      post.FeedID,
 	}
 }
+func databasePostToPosts(posts []database.Post) []Post {
+	result := make([]Post, len(posts))
+	for i, post := range posts {
+		result[i] = databasePostToPost(post)
+	}
+	return result
+}
+
+func nullTImetoTimePTR(t sql.NullTime) *time.Time {
+	if t.Valid {
+		return &t.Time
+	}
+	return nil
+}
+
+// func nullStrToStrPTR(s sql.NullString) *string {
+// 	if s.Valid {
+// 		return &s.String
+// 	}
+// 	return nil
+// }

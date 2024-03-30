@@ -1,92 +1,102 @@
 package utils
 
 import (
-	"encoding/json"
+	"context"
 	"encoding/xml"
 	"errors"
-	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"rssagg/internal/database"
+	"sync"
 	"time"
 )
 
 type XMLpost struct {
 	Channel struct {
-		Title         string `xml:"title"`
-		Link          string `xml:"link"`
-		Description   string `xml:"description"`
-		Generator     string `xml:"generator"`
-		Language      string `xml:"language"`
-		LastBuildDate string `xml:"lastBuildDate"`
-		Item          struct {
-			Title       string    `xml:"title"`
-			Link        string    `xml:"link"`
-			PubDate     time.Time `xml:"pubDate"`
-			Guid        string    `xml:"guid"`
-			Description string    `xml:"description"`
-		} `xml:"item"`
+		Title       string        `xml:"title"`
+		Link        string        `xml:"link"`
+		Description string        `xml:"description"`
+		Language    string        `xml:"language"`
+		Item        []XmlPostResp `xml:"item"`
 	} `xml:"channel"`
 }
 
 type XmlPostResp struct {
-	Item          struct {
-		Title       string    `xml:"title"`
-		Link        string    `xml:"link"`
-		PubDate     time.Time `xml:"pubDate"`
-		Guid        string    `xml:"guid"`
-		Description string    `xml:"description"`
-	} `xml:"item"`
+	Title       string `xml:"title"`
+	Link        string `xml:"link"`
+	PubDate     string `xml:"pubDate"`
+	Description string `xml:"description"`
 }
-// grab urls from the request and put them into a slice to handle in the
-// enpoint handler LIKELY CASE XML
-func (cfg *ApiConfig) getFeedsFromUrl(r *http.Response) ([]Post, error) {
-	contentType := r.Header.Get("Content-Type")
 
-	fmt.Printf("content type checked: %v", contentType)
-
-	switch contentType {
-	case "application/json":
-		fmt.Println(": type json")
-
-		type parameters struct {
-			Url Post `json:"url"`
-		}
-
-		ScrapedUrls := make([]Post, 10)
-
-		decode := json.NewDecoder(r.Body)
-		params := parameters{}
-		err := decode.Decode(&params)
+func startScraper(db *database.Queries, concurrency int, timeBetweenScrapes time.Duration) {
+	tick := time.NewTicker(timeBetweenScrapes)
+	for ; ; <-tick.C{
+		feeds, err := db.GetNextFeedsToFetch(context.Background(), int32(concurrency))
 		if err != nil {
-			err = errors.New("cannot parse json")
-			return nil, err
-		}
-		for i := 0; i <= 10; i++ {
-			ScrapedUrls = append(ScrapedUrls, params.Url)
-		}
-		return ScrapedUrls, nil
-
-	case "application/xml":
-		fmt.Println(": type xml")
-
-		type parameters struct {
-			Url Post `xml:"link"`
+			log.Println("could not get feeds", err)
+			continue
 		}
 
-		ScrapedUrls := make([]Post, 10)
-
-		decode := xml.NewDecoder(r.Body)
-		params := parameters{}
-		err := decode.Decode(&params)
-		if err != nil {
-			err = errors.New("cannot parse xml")
-			return nil, err
+		log.Printf("found %d feeds.", len(feeds))
+		wg := &sync.WaitGroup{}
+		for _, feed := range feeds {
+			wg.Add(1)
+			go scrapeFeeds(db, wg, feed)
 		}
-		for i := 0; i <= 10; i++ {
-			ScrapedUrls = append(ScrapedUrls, params.Url)
-		}
-		return ScrapedUrls, nil
-	default:
-		fmt.Println("returning default")
-		return nil, errors.New("cannot parse, bad request")
+		wg.Wait()
 	}
 }
+
+func scrapeFeeds(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
+	defer wg.Done()
+	_, err  := db.MarkFeedsFetched(context.Background(), feed.ID)
+	if err != nil {
+		log.Printf("could not fetch feed from feed: %s", feed.Name)
+		return
+	}
+	feedData, err := getFeedsFromUrl(feed.Url)
+	if err != nil {
+		log.Printf("could not get feeds from: %s", feed.Url)
+	}
+	for _, item := range feedData.Channel.Item {
+		log.Println("found feed", item.Title)
+	}
+	log.Printf("Feed %s retrieved, %v posts found", feed.Name, len(feedData.Channel.Item))
+
+}
+
+// grab urls from the request and put them into a slice to handle in the
+// enpoint handler LIKELY CASE XML
+func getFeedsFromUrl(feedURL string) (*XMLpost, error) {
+	httpClient := http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp, err := httpClient.Get(feedURL)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("logging resp: %v", resp)
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.New("could not retrieve body")
+
+	}
+
+	log.Printf("logging data: %v", data)
+
+	defer resp.Body.Close()
+	var xmlresp XMLpost
+	err = xml.Unmarshal(data, &xmlresp)
+	if err != nil {
+		return nil, errors.New("error unmarshalling")
+	}
+
+	log.Printf("logging unmarshal: %v", &xmlresp)
+
+	return &xmlresp, nil
+}
+
+

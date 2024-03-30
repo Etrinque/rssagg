@@ -60,7 +60,7 @@ func InitServer() {
 	Router.Get("/v1/users", apiCfg.authMiddleware(apiCfg.handleUsersGet))
 	Router.Post("/v1/feeds", apiCfg.authMiddleware(apiCfg.handleFeedCreate))
 	Router.Get("/v1/feeds", apiCfg.handleGetAllFeeds)
-	// Router.Get("/v1/posts", apiCfg.authMiddleware(apiCfg.handleGetPostByUser))
+	Router.Get("/v1/posts", apiCfg.authMiddleware(apiCfg.handleGetPostByUser))
 	Router.Get("/v1/posts", apiCfg.HandleGetFeedsFromUrl)
 	Router.Post("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleCreateFollowFeed))
 	Router.Get("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleGetFollowFeeds))
@@ -83,6 +83,10 @@ func InitServer() {
 		done <- true
 		os.Exit(0)
 	}()
+	
+	const collectionThreads = 10
+	const collectionInterval = time.Minute
+	go startScraper(dbQueries, collectionThreads, collectionInterval)
 
 	fmt.Printf("listening on %v \n", port)
 	log.Fatal(server.ListenAndServe())

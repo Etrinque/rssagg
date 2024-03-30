@@ -7,16 +7,18 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const getNextFeedsToFetch = `-- name: GetNextFeedsToFetch :many
 SELECT id, created_at, updated_at, name, url, user_id, last_fetched_at FROM feeds
-    ORDER BY last_fetched_at DESC
-    LIMIT 10
+    ORDER BY last_fetched_at ASC NULLS FIRST
+    LIMIT $1
 `
 
-func (q *Queries) GetNextFeedsToFetch(ctx context.Context) ([]Feed, error) {
-	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch)
+func (q *Queries) GetNextFeedsToFetch(ctx context.Context, limit int32) ([]Feed, error) {
+	rows, err := q.db.QueryContext(ctx, getNextFeedsToFetch, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -46,12 +48,25 @@ func (q *Queries) GetNextFeedsToFetch(ctx context.Context) ([]Feed, error) {
 	return items, nil
 }
 
-const markFeedsFetched = `-- name: MarkFeedsFetched :exec
+const markFeedsFetched = `-- name: MarkFeedsFetched :one
 UPDATE feeds 
-    SET (time_last_fetched, updated_at) = TIMESTAMP
+    SET time_last_fetched = NOW(),
+    updated_at = NOW()
+    WHERE id = $1
+    RETURNING id, created_at, updated_at, name, url, user_id, last_fetched_at
 `
 
-func (q *Queries) MarkFeedsFetched(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, markFeedsFetched)
-	return err
+func (q *Queries) MarkFeedsFetched(ctx context.Context, id uuid.UUID) (Feed, error) {
+	row := q.db.QueryRowContext(ctx, markFeedsFetched, id)
+	var i Feed
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.Url,
+		&i.UserID,
+		&i.LastFetchedAt,
+	)
+	return i, err
 }

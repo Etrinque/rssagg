@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"rssagg/internal/database"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -129,7 +130,7 @@ func (cfg *ApiConfig) handleGetAllFeeds(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, feeds)
+	RespondWithJSON(w, http.StatusOK, databaseFeedsToFeeds(feeds))
 }
 
 // Authenticated Endpoint
@@ -222,7 +223,7 @@ func (cfg *ApiConfig) HandleGetFeedsFromUrl(w http.ResponseWriter, r *http.Reque
 	fmt.Println(rootUrl)
 	fmt.Println(req)
 
-	resp, err := cfg.getFeedsFromUrl(req)
+	resp, err := getFeedsFromUrl(params.RootURL)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not retrieve urls")
 		return
@@ -233,12 +234,23 @@ func (cfg *ApiConfig) HandleGetFeedsFromUrl(w http.ResponseWriter, r *http.Reque
 	RespondWithJSON(w, http.StatusOK, resp)
 }
 
+
 // AUthenticated endpoint
-// func (cfg *ApiConfig) handleGetPostByUser(w http.ResponseWriter, r *http.Request, user database.User, feed database.Feed) {
-//
-// posts, err := cfg.DB.GetPostsByUser(r.Context(), user.ID)
-// if err != nil {
-// RespondWithError(w, http.StatusUnauthorized, "unauthorized")
-// }
-// urls, err := cfg.getFeedsFromUrl(r, feed.Url)
-// }
+func (cfg *ApiConfig) handleGetPostByUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	limitStr := r.URL.Query().Get("limit")
+	limit := 10
+	if specifiedLimit, err := strconv.Atoi(limitStr); err == nil {
+		limit = specifiedLimit
+	}
+
+	posts, err := cfg.DB.GetPostsByUser(r.Context(), database.GetPostsByUserParams{
+		UserID: user.ID,
+		Limit: int32(limit),
+	})
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "unable to retrieve posts")
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, databasePostToPosts(posts))
+}
