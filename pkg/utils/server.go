@@ -83,7 +83,7 @@ func InitServer() {
 		done <- true
 		os.Exit(0)
 	}()
-	
+
 	const collectionThreads = 10
 	const collectionInterval = time.Minute
 	go startScraper(dbQueries, collectionThreads, collectionInterval)

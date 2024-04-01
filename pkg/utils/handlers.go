@@ -203,37 +203,37 @@ func (cfg *ApiConfig) handleDeleteFollowFeed(w http.ResponseWriter, r *http.Requ
 	RespondWithJSON(w, http.StatusOK, resp{MSG: "Record Deleted"})
 }
 
-func (cfg *ApiConfig) HandleGetFeedsFromUrl(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		RootURL string `json:"url"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "unauthorized user")
-		return
-	}
-	rootUrl := params.RootURL
-	req, err := http.Get(rootUrl)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "could not get root url")
-	}
-
-	fmt.Println(rootUrl)
-	fmt.Println(req)
-
-	resp, err := getFeedsFromUrl(params.RootURL)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "could not retrieve urls")
-		return
-	}
-
-	fmt.Println(resp)
-
-	RespondWithJSON(w, http.StatusOK, resp)
-}
-
+// func (cfg *ApiConfig) HandleGetFeedsFromUrl(w http.ResponseWriter, r *http.Request) {
+// type parameters struct {
+// RootURL string `json:"url"`
+// }
+// decoder := json.NewDecoder(r.Body)
+// params := parameters{}
+// err := decoder.Decode(&params)
+// if err != nil {
+// RespondWithError(w, http.StatusUnauthorized, "unauthorized user")
+// return
+// }
+// rootUrl := params.RootURL
+// req, err := http.Get(rootUrl)
+// if err != nil {
+// RespondWithError(w, http.StatusInternalServerError, "could not get root url")
+// }
+//
+// fmt.Println(rootUrl)
+// fmt.Println(req)
+//
+// resp, err := getFeedsFromUrl(params.RootURL)
+// if err != nil {
+// RespondWithError(w, http.StatusInternalServerError, "could not retrieve urls")
+// return
+// }
+//
+// fmt.Println(resp)
+//
+// RespondWithJSON(w, http.StatusOK, resp)
+// }
+//
 
 // AUthenticated endpoint
 func (cfg *ApiConfig) handleGetPostByUser(w http.ResponseWriter, r *http.Request, user database.User) {
@@ -245,7 +245,7 @@ func (cfg *ApiConfig) handleGetPostByUser(w http.ResponseWriter, r *http.Request
 
 	posts, err := cfg.DB.GetPostsByUser(r.Context(), database.GetPostsByUserParams{
 		UserID: user.ID,
-		Limit: int32(limit),
+		Limit:  int32(limit),
 	})
 
 	if err != nil {

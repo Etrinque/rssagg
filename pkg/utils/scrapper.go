@@ -35,7 +35,7 @@ type XmlPostResp struct {
 
 func startScraper(db *database.Queries, concurrency int, timeBetweenScrapes time.Duration) {
 	tick := time.NewTicker(timeBetweenScrapes)
-	for ; ; <-tick.C{
+	for ; ; <-tick.C {
 		feeds, err := db.GetNextFeedsToFetch(context.Background(), int32(concurrency))
 		if err != nil {
 			log.Println("could not get feeds", err)
@@ -54,7 +54,7 @@ func startScraper(db *database.Queries, concurrency int, timeBetweenScrapes time
 
 func scrapeFeeds(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 	defer wg.Done()
-	_, err  := db.MarkFeedsFetched(context.Background(), feed.ID)
+	_, err := db.MarkFeedsFetched(context.Background(), feed.ID)
 	if err != nil {
 		log.Printf("could not fetch feed from feed: %s", feed.Name)
 		return
@@ -67,21 +67,21 @@ func scrapeFeeds(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 		publishedAt := sql.NullTime{}
 		if t, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
 			publishedAt = sql.NullTime{
-				Time: t,
+				Time:  t,
 				Valid: true,
 			}
 		}
 		_, err := db.CreatePost(context.Background(), database.CreatePostParams{
-			ID: uuid.New(),
+			ID:        uuid.New(),
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
-			FeedID: feed.ID,
-			Title: item.Title,
+			FeedID:    feed.ID,
+			Title:     item.Title,
 			Description: sql.NullString{
 				String: item.Description,
-				Valid: true,
+				Valid:  true,
 			},
-			Url: item.Link,
+			Url:         item.Link,
 			PublishedAt: publishedAt,
 		})
 		if err != nil {
@@ -129,5 +129,3 @@ func getFeedsFromUrl(feedURL string) (*XMLpost, error) {
 
 	return &xmlresp, nil
 }
-
-
