@@ -2,14 +2,18 @@ package utils
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"errors"
 	"io"
 	"log"
 	"net/http"
 	"rssagg/internal/database"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type XMLpost struct {
@@ -60,6 +64,33 @@ func scrapeFeeds(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 		log.Printf("could not get feeds from: %s", feed.Url)
 	}
 	for _, item := range feedData.Channel.Item {
+		publishedAt := sql.NullTime{}
+		if t, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
+			publishedAt = sql.NullTime{
+				Time: t,
+				Valid: true,
+			}
+		}
+		_, err := db.CreatePost(context.Background(), database.CreatePostParams{
+			ID: uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			FeedID: feed.ID,
+			Title: item.Title,
+			Description: sql.NullString{
+				String: item.Description,
+				Valid: true,
+			},
+			Url: item.Link,
+			PublishedAt: publishedAt,
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique contraint") {
+				continue
+			}
+			log.Printf("Couldnt create post: %v", err)
+			continue
+		}
 		log.Println("found feed", item.Title)
 	}
 	log.Printf("Feed %s retrieved, %v posts found", feed.Name, len(feedData.Channel.Item))
@@ -76,6 +107,7 @@ func getFeedsFromUrl(feedURL string) (*XMLpost, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	log.Printf("logging resp: %v", resp)
 
@@ -87,7 +119,6 @@ func getFeedsFromUrl(feedURL string) (*XMLpost, error) {
 
 	log.Printf("logging data: %v", data)
 
-	defer resp.Body.Close()
 	var xmlresp XMLpost
 	err = xml.Unmarshal(data, &xmlresp)
 	if err != nil {

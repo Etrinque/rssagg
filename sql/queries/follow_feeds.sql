@@ -6,8 +6,5 @@ RETURNING *;
 -- name: GetFollowFeed :many
 SELECT * FROM follow_feeds WHERE user_id = $1;
 
--- name: GetFollowFeedsAll :many
-SELECT * FROM follow_feeds;
-
 -- name: DeleteFollowFeed :exec
 DELETE FROM follow_feeds WHERE id = $1 and user_id = $2;
