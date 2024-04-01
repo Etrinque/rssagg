@@ -61,7 +61,7 @@ func InitServer() {
 	Router.Post("/v1/feeds", apiCfg.authMiddleware(apiCfg.handleFeedCreate))
 	Router.Get("/v1/feeds", apiCfg.handleGetAllFeeds)
 	Router.Get("/v1/posts", apiCfg.authMiddleware(apiCfg.handleGetPostByUser))
-	Router.Get("/v1/posts", apiCfg.HandleGetFeedsFromUrl)
+	// Router.Get("/v1/posts", apiCfg.HandleGetFeedsFromUrl)
 	Router.Post("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleCreateFollowFeed))
 	Router.Get("/v1/feedfollow", apiCfg.authMiddleware(apiCfg.handleGetFollowFeeds))
 	Router.Delete("/v1/feedfollow/{feed_id}", apiCfg.authMiddleware(apiCfg.handleDeleteFollowFeed))
