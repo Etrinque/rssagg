@@ -3,12 +3,11 @@ package utils
 import (
 	"database/sql"
 	"fmt"
+	"github.com/etrinque/rssagg/database"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"rssagg/internal"
-	"rssagg/internal/database"
 	"strings"
 	"syscall"
 	"time"
@@ -18,8 +17,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var root = internal.Path
-var path = (root + "/rssagg/.env")
+// NOTE: Refactor to .env
+var Path = "./github_repos"
+
+var root = Path
+var path = root + "/rssagg/.env"
 var Router = chi.NewRouter()
 var corsMux = corsMiddleware(Router)
 
@@ -97,7 +99,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			if strings.HasPrefix(origin, "http://") || strings.HasPrefix(origin, "https://") {
+			if strings.HasPrefix(origin, "https://") || strings.HasPrefix(origin, "https://") {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
