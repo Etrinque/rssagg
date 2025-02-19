@@ -1,7 +1,7 @@
 package main
 
 import (
-	"rssagg/pkg/utils"
+	"github.com/etrinque/rssagg/utils"
 )
 
 func main() {

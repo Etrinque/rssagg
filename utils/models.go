@@ -2,7 +2,7 @@ package utils
 
 import (
 	"database/sql"
-	"rssagg/internal/database"
+	"github.com/etrinque/rssagg/database"
 	"time"
 
 	"github.com/google/uuid"
