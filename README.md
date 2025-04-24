@@ -100,7 +100,8 @@ CONNSTR="postgresql://[user[:password]@][host][:port][/dbname]"
 #### Build
 
 ```shell
-  go build -O rss && ./rss
+> cd main
+> go build -o rss && ./rss
 ```
 
 ---
