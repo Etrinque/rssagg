@@ -105,18 +105,13 @@ CONNSTR="postgresql://[user[:password]@][host][:port][/dbname]"
 
 ---
 
-### Usage Examples
+### Here are some examples of how to use the project:
 
-Here are some examples of how to use the project:
-
-Create a new user account: curl -X POST -H "Content-Type: application/json" -d '{"name": "John
-Doe"}' http://localhost:8080/users
-Retrieve all available feeds: curl -X GET http://localhost:8080/feeds
-Create a new follow feed for a given user: curl -X POST -H "Content-Type: application/json" -d '{"feed_id": "
-1234567890"}' http://localhost:8080/follow-feeds
-Contribution Guidelines
-Contributions are welcome! To contribute, please fork the repository and submit a pull request with your changes. Make
-sure to follow the standard coding conventions and formatting guidelines.
+- Create a new user account: curl -X POST -H "Content-Type: application/json" -d '{"name": "John
+  Doe"}' http://localhost:8080/users
+- Retrieve all available feeds: curl -X GET http://localhost:8080/feeds
+- Create a new follow feed for a given user: curl -X POST -H "Content-Type: application/json" -d '{"feed_id": "
+  1234567890"}' http://localhost:8080/follow-feeds
 
 Licensing
 This project is licensed under the MIT License. See the LICENSE file for details.
