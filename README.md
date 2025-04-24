@@ -48,7 +48,9 @@ The project exposes several API endpoints, including:
 
 ### Installation and Setup
 
-- RSSAGG requires GO version 1.23 ^
+- RSSAGG requires GO version 1.23
+
+---
 
 #### Create directrory
 
@@ -56,11 +58,15 @@ The project exposes several API endpoints, including:
 mkdir project && cd project
 ```
 
+---
+
 #### Clone the repository - from console
 
 ```shell
 git clone https://github.com/etrinque/rssagg.git
 ```
+
+---
 
 #### Navigate to project directory
 
@@ -68,13 +74,25 @@ git clone https://github.com/etrinque/rssagg.git
 cd /rssagg
 ```
 
+---
+
 #### Install dependencies
 
 ```shell
 go mod tidy 
 ```
 
+---
+
 #### Configure environment variables in .env
+
+- Create .env file in root of project
+
+```shell
+touch .env 
+```
+
+- Add these items to .env
 
 ```
 PORT=["8080"]
@@ -83,6 +101,8 @@ CONNSTR="postgresql://[user[:password]@][host][:port][/dbname]"
 
 // replace all within [ ] with your desired PORT and DB connection details;
 ```
+
+---
 
 #### Build
 
