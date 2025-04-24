@@ -24,13 +24,6 @@ github.com/lib/pq (v1.10.9)
 The core logic of the project is implemented in the utils/handlers.go file, which defines various API endpoints for
 creating, reading, updating, and deleting (CRUD) operations on users, feeds, and follow feeds.
 
-#### Some notable functions include:
-
-- handleUsersCreate: Creates a new user account
-- handleGetAllFeeds: Retrieves all available feeds
-- handleCreateFollowFeed: Creates a new follow feed for a given user
-- handleGetPostByUser: Retrieves posts associated with a specific user
-
 ---
 
 ### API Endpoints
